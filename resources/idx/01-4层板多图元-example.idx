@@ -1,0 +1,1673 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<foundation:EDMDDataSet
+    xmlns:administration="http://www.prostep.org/ecad-mcad/edmd/4.0/administration"
+    xmlns:annotation="http://www.prostep.org/ecad-mcad/edmd/4.0/annotation"
+    xmlns:computational="http://www.prostep.org/ecad-mcad/edmd/4.0/computational"
+    xmlns:d2="http://www.prostep.org/ecad-mcad/edmd/4.0/geometry.d2"
+    xmlns:external="http://www.prostep.org/ecad-mcad/edmd/4.0/external"
+    xmlns:foundation="http://www.prostep.org/ecad-mcad/edmd/4.0/foundation"
+    xmlns:grouping="http://www.prostep.org/ecad-mcad/edmd/4.0/grouping"
+    xmlns:material="http://www.prostep.org/ecad-mcad/edmd/4.0/material"
+    xmlns:pdm="http://www.prostep.org/ecad-mcad/edmd/4.0/pdm"
+    xmlns:property="http://www.prostep.org/ecad-mcad/edmd/4.0/property"
+    xmlns:text="http://www.prostep.org/ecad-mcad/edmd/4.0/text"
+    xmlns:ws="http://www.prostep.org/ecad-mcad/edmd/4.0/ws"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+  <!-- ============================================================
+    IDXv4.5 实现示例 - 4层板设计    
+    建模关键点:
+    1. 使用单位: mm
+    2. 坐标系: Z=0为底层(BOTTOM)组件安装面，向下为负，向上为正
+    3. 层叠建模: 使用绝对坐标累加方式定义物理层
+    4. 几何定位: 使用"被动PCB模型"，通过AssembleToName实现相对定位
+    5. 标识符: 所有Item都有唯一的pdm:Identifier
+    6. 基线标识: 所有基线项目都标记<pdm:Baseline>true</pdm:Baseline>
+    7. 几何类型: 正确使用geometryType属性进行简化表示
+    8. 层处理: 丝印/阻焊/锡膏层作为设计层，厚度为0.01mm
+    ============================================================ -->
+
+  <!-- ==================== 文件头信息 ==================== -->
+  <foundation:Header xsi:type="foundation:EDMDHeader">
+    <foundation:CreatorName>ECADSYSTEM</foundation:CreatorName>
+    <foundation:Description>PCB Design</foundation:Description>
+    <foundation:CreatorCompany>MGC</foundation:CreatorCompany>
+    <foundation:CreatorSystem>Expedition</foundation:CreatorSystem>
+    <foundation:PostProcessor />
+    <foundation:PostProcessorVersion />
+    <foundation:Creator>Administrator</foundation:Creator>
+    <foundation:GlobalUnitLength>ITEM_UNIT_LENGTH</foundation:GlobalUnitLength>
+    <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+            <foundation:SystemScope />
+            <foundation:ObjectName>IDX_VERSION</foundation:ObjectName>
+        </property:Key>
+        <property:Value>IDXv4.5</property:Value>
+    </foundation:UserProperty>
+  </foundation:Header>
+
+  <!-- ==================== 主体数据 ==================== -->
+  <foundation:Body xsi:type="foundation:EDMDDataSetBody">
+    
+    <!-- ============== 第1部分: 定义层叠结构 ============== -->
+    <!-- 注意: 所有层的Z坐标基于Z=0为底层安装面，向上为正 -->
+    
+    <!-- 1.1 底层丝印层 -->
+    <foundation:Item id="LAYER_BOTTOM_SILK" geometryType="LAYER_SILKSCREEN">
+      <foundation:Name>BOTTOM_SILKSCREEN</foundation:Name>
+      <foundation:Description>底层丝印层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_BOTTOM_SILK</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <!-- 层类型属性 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>SilkScreen</property:Value>
+      </foundation:UserProperty>
+      <!-- 层位置信息 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>SIDE</foundation:ObjectName>
+        </property:Key>
+        <property:Value>BOTTOM</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: -0.03到-0.02 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>-0.03</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>-0.02</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>BOTTOM_SILK</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- 1.2 底层锡膏层 -->
+    <foundation:Item id="LAYER_BOTTOM_PASTE" geometryType="LAYER_SOLDERPASTE">
+      <foundation:Name>BOTTOM_SOLDERPASTE</foundation:Name>
+      <foundation:Description>底层锡膏层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_BOTTOM_PASTE</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>SolderPaste</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>SIDE</foundation:ObjectName>
+        </property:Key>
+        <property:Value>BOTTOM</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: -0.02到-0.01 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>-0.02</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>-0.01</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>BOTTOM_PASTE</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- 1.3 底层阻焊层 -->
+    <foundation:Item id="LAYER_BOTTOM_MASK" geometryType="LAYER_SOLDERMASK">
+      <foundation:Name>BOTTOM_SOLDERMASK</foundation:Name>
+      <foundation:Description>底层阻焊层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_BOTTOM_MASK</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>SolderMask</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>SIDE</foundation:ObjectName>
+        </property:Key>
+        <property:Value>BOTTOM</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: -0.01到0.00 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>-0.01</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.00</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>BOTTOM_MASK</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- 1.4 底层导电层 (厚度: 0.035mm) -->
+    <foundation:Item id="LAYER_BOTTOM" geometryType="LAYER_OTHERSIGNAL">
+      <foundation:Name>BOTTOM_LAYER</foundation:Name>
+      <foundation:Description>底层导电层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_BOTTOM</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>Signal</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>SIDE</foundation:ObjectName>
+        </property:Key>
+        <property:Value>BOTTOM</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: 0.00到0.035 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.00</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.035</property:Value>
+      </foundation:UserProperty>
+      <!-- 介质属性 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>DIELECTRIC_CONSTANT</foundation:ObjectName>
+        </property:Key>
+        <property:Value>4.5</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LOSS_TANGENT</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.02</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>BOTTOM</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- 1.5 介电3层 (厚度: 0.2104mm) -->
+    <foundation:Item id="LAYER_DIELECTRIC_3" geometryType="LAYER_DIELECTRIC">
+      <foundation:Name>DIELECTRIC_3</foundation:Name>
+      <foundation:Description>介电层3</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_DIELECTRIC_3</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>Dielectric</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: 0.035到0.2454 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.035</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.2454</property:Value>
+      </foundation:UserProperty>
+      <!-- 介质属性 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>DIELECTRIC_CONSTANT</foundation:ObjectName>
+        </property:Key>
+        <property:Value>4.2</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LOSS_TANGENT</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.018</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>DIELECTRIC_3</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- 1.6 内层2 (厚度: 0.0152mm) -->
+    <foundation:Item id="LAYER_INNER_2" geometryType="LAYER_POWERORGROUND">
+      <foundation:Name>INNER_LAYER_2</foundation:Name>
+      <foundation:Description>内层2 - 电源层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_INNER_2</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>PowerOrGround</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: 0.2454到0.2606 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.2454</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.2606</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>INNER_2</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- 1.7 介电2层 (厚度: 1.065mm) - 核心层 -->
+    <foundation:Item id="LAYER_DIELECTRIC_2" geometryType="LAYER_DIELECTRIC">
+      <foundation:Name>DIELECTRIC_2</foundation:Name>
+      <foundation:Description>介电层2 - 核心层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_DIELECTRIC_2</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>Dielectric</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: 0.2606到1.3256 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.2606</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.3256</property:Value>
+      </foundation:UserProperty>
+      <!-- 介质属性 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>DIELECTRIC_CONSTANT</foundation:ObjectName>
+        </property:Key>
+        <property:Value>4.3</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LOSS_TANGENT</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.02</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>DIELECTRIC_2</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- 1.8 内层1 (厚度: 0.0152mm) -->
+    <foundation:Item id="LAYER_INNER_1" geometryType="LAYER_OTHERSIGNAL">
+      <foundation:Name>INNER_LAYER_1</foundation:Name>
+      <foundation:Description>内层1 - 信号层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_INNER_1</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>Signal</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: 1.3256到1.3408 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.3256</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.3408</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>INNER_1</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- 1.9 介电1层 (厚度: 0.2104mm) -->
+    <foundation:Item id="LAYER_DIELECTRIC_1" geometryType="LAYER_DIELECTRIC">
+      <foundation:Name>DIELECTRIC_1</foundation:Name>
+      <foundation:Description>介电层1</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_DIELECTRIC_1</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>Dielectric</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: 1.3408到1.5512 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.3408</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.5512</property:Value>
+      </foundation:UserProperty>
+      <!-- 介质属性 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>DIELECTRIC_CONSTANT</foundation:ObjectName>
+        </property:Key>
+        <property:Value>4.2</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LOSS_TANGENT</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.018</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>DIELECTRIC_1</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- 1.10 顶层导电层 (厚度: 0.035mm) -->
+    <foundation:Item id="LAYER_TOP" geometryType="LAYER_OTHERSIGNAL">
+      <foundation:Name>TOP_LAYER</foundation:Name>
+      <foundation:Description>顶层导电层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_TOP</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>Signal</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>SIDE</foundation:ObjectName>
+        </property:Key>
+        <property:Value>TOP</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: 1.5512到1.5862 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.5512</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.5862</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>TOP</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- 1.11 顶层阻焊层 -->
+    <foundation:Item id="LAYER_TOP_MASK" geometryType="LAYER_SOLDERMASK">
+      <foundation:Name>TOP_SOLDERMASK</foundation:Name>
+      <foundation:Description>顶层阻焊层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_TOP_MASK</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>SolderMask</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>SIDE</foundation:ObjectName>
+        </property:Key>
+        <property:Value>TOP</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: 1.5862到1.5962 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.5862</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.5962</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>TOP_MASK</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- 1.12 顶层锡膏层 -->
+    <foundation:Item id="LAYER_TOP_PASTE" geometryType="LAYER_SOLDERPASTE">
+      <foundation:Name>TOP_SOLDERPASTE</foundation:Name>
+      <foundation:Description>顶层锡膏层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_TOP_PASTE</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>SolderPaste</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>SIDE</foundation:ObjectName>
+        </property:Key>
+        <property:Value>TOP</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: 1.5962到1.6062 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.5962</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.6062</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>TOP_PASTE</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- 1.13 顶层丝印层 -->
+    <foundation:Item id="LAYER_TOP_SILK" geometryType="LAYER_SILKSCREEN">
+      <foundation:Name>TOP_SILKSCREEN</foundation:Name>
+      <foundation:Description>顶层丝印层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>LAYER_TOP_SILK</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LayerType</foundation:ObjectName>
+        </property:Key>
+        <property:Value>SilkScreen</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>SIDE</foundation:ObjectName>
+        </property:Key>
+        <property:Value>TOP</property:Value>
+      </foundation:UserProperty>
+      <!-- Z坐标范围: 1.6062到1.6162 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>LowerBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.6062</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>UpperBound</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1.6162</property:Value>
+      </foundation:UserProperty>
+      <pdm:ReferenceName>TOP_SILK</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- ============== 第2部分: 定义层叠组合 ============== -->
+    <foundation:Item id="STACKUP_4LAYER" geometryType="LAYER_STACKUP">
+      <foundation:Name>4LAYER_STACKUP</foundation:Name>
+      <foundation:Description>4层板层叠组合</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>STACKUP_4LAYER</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      
+      <!-- 按顺序添加所有层实例 -->
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>BOTTOM_SILK</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_BOTTOM_SILK</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>BOTTOM_PASTE</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_BOTTOM_PASTE</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>BOTTOM_MASK</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_BOTTOM_MASK</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>BOTTOM</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_BOTTOM</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>DIELECTRIC_3</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_DIELECTRIC_3</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>INNER_2</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_INNER_2</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>DIELECTRIC_2</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_DIELECTRIC_2</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>INNER_1</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_INNER_1</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>DIELECTRIC_1</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_DIELECTRIC_1</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>TOP</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_TOP</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>TOP_MASK</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_TOP_MASK</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>TOP_PASTE</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_TOP_PASTE</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ItemInstance>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>TOP_SILK</foundation:ObjectName>
+        </pdm:InstanceName>
+        <pdm:Item>LAYER_TOP_SILK</pdm:Item>
+      </pdm:ItemInstance>
+      
+      <pdm:ReferenceName>BOARD_STACKUP</pdm:ReferenceName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- ============== 第3部分: 定义板框 ============== -->
+    <!-- 3.1 板框几何定义 -->
+    <foundation:CartesianPoint id="BOARD_PT1" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>0</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>0</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CartesianPoint id="BOARD_PT2" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>100</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>0</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CartesianPoint id="BOARD_PT3" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>100</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>80</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CartesianPoint id="BOARD_PT4" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>0</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>80</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:PolyLine id="BOARD_POLYLINE">
+      <d2:Point>BOARD_PT1</d2:Point>
+      <d2:Point>BOARD_PT2</d2:Point>
+      <d2:Point>BOARD_PT3</d2:Point>
+      <d2:Point>BOARD_PT4</d2:Point>
+      <d2:Point>BOARD_PT1</d2:Point> <!-- 闭合多边形 -->
+    </foundation:PolyLine>
+    
+    <!-- 3.2 板框曲线集定义 -->
+    <foundation:CurveSet2d id="BOARD_CURVESET" xsi:type="d2:EDMDCurveSet2d">
+      <pdm:ShapeDescriptionType>GeometricModel</pdm:ShapeDescriptionType>
+      <d2:LowerBound>
+        <property:Value>0.00</property:Value> <!-- 从底层安装面开始 -->
+      </d2:LowerBound>
+      <d2:UpperBound>
+        <property:Value>1.5862</property:Value> <!-- 到顶层安装面结束 -->
+      </d2:UpperBound>
+      <d2:DetailedGeometricModelElement>BOARD_POLYLINE</d2:DetailedGeometricModelElement>
+    </foundation:CurveSet2d>
+    
+    <!-- 3.3 板框形状元素定义 -->
+    <foundation:ShapeElement id="BOARD_SHAPE_ELEMENT">
+      <pdm:ShapeElementType>FeatureShapeElement</pdm:ShapeElementType>
+      <pdm:Inverted>false</pdm:Inverted> <!-- 非切割，是实体 -->
+      <pdm:DefiningShape>BOARD_CURVESET</pdm:DefiningShape>
+    </foundation:ShapeElement>
+    
+    <!-- 3.4 板框Item定义 -->
+    <foundation:Item id="BOARD_OUTLINE_ITEM" geometryType="BOARD_OUTLINE">
+      <foundation:Name>PCB_BOARD</foundation:Name>
+      <foundation:Description>4层板板框 - 100mm x 80mm</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>PCB_BOARD</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <pdm:ItemInstance>
+        <pdm:Item>BOARD_GEOM_ITEM</pdm:Item>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>PCB_BOARD_INSTANCE</foundation:ObjectName>
+        </pdm:InstanceName>
+      </pdm:ItemInstance>
+      <!-- 板框关联到层叠组合 -->
+      <pdm:AssembleToName>BOARD_STACKUP</pdm:AssembleToName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+    
+    <foundation:Item id="BOARD_GEOM_ITEM">
+      <foundation:Name>PCB_BOARD_GEOMETRY</foundation:Name>
+      <foundation:Description>板框几何定义</foundation:Description>
+      <pdm:ItemType>single</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>BOARD_GEOM</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <pdm:Shape>BOARD_SHAPE_ELEMENT</pdm:Shape>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- ============== 第4部分: 定义过孔 ============== -->
+    <!-- 4.1 过孔几何定义 -->
+    <foundation:CartesianPoint id="VIA_CENTER" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>0</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>0</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CircleCenter id="VIA_CIRCLE">
+      <d2:CenterPoint>VIA_CENTER</d2:CenterPoint>
+      <d2:Diameter>
+        <property:Value>0.61</property:Value> <!-- 外径0.61mm -->
+      </d2:Diameter>
+    </foundation:CircleCenter>
+    
+    <!-- 4.2 过孔曲线集定义 - 贯穿整个板厚 -->
+    <foundation:CurveSet2d id="VIA_CURVESET" xsi:type="d2:EDMDCurveSet2d">
+      <pdm:ShapeDescriptionType>GeometricModel</pdm:ShapeDescriptionType>
+      <d2:LowerBound>
+        <property:Value>0.00</property:Value> <!-- 从底层开始 -->
+      </d2:LowerBound>
+      <d2:UpperBound>
+        <property:Value>1.5862</property:Value> <!-- 到顶层结束 -->
+      </d2:UpperBound>
+      <d2:DetailedGeometricModelElement>VIA_CIRCLE</d2:DetailedGeometricModelElement>
+    </foundation:CurveSet2d>
+    
+    <!-- 4.3 过孔形状元素定义 -->
+    <foundation:ShapeElement id="VIA_SHAPE_ELEMENT">
+      <pdm:ShapeElementType>FeatureShapeElement</pdm:ShapeElementType>
+      <pdm:Inverted>false</pdm:Inverted> <!-- 孔是实体，需要切割掉 -->
+      <pdm:DefiningShape>VIA_CURVESET</pdm:DefiningShape>
+    </foundation:ShapeElement>
+    
+    <!-- 4.4 过孔Item定义 -->
+    <foundation:Item id="VIA_PADSTACK" geometryType="VIA">
+      <foundation:Name>VIA_0.61_0.305</foundation:Name>
+      <foundation:Description>过孔 - 外径0.61mm, 内径0.305mm</foundation:Description>
+      <pdm:ItemType>single</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>VIA_STANDARD</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <!-- 过孔参数 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>HOLE_DIAMETER</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.305</property:Value> <!-- 内径 -->
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>PAD_DIAMETER</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.61</property:Value> <!-- 外径 -->
+      </foundation:UserProperty>
+      <pdm:Shape>VIA_SHAPE_ELEMENT</pdm:Shape>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+    
+    <!-- 4.5 过孔实例1 -->
+    <foundation:Item id="VIA_INSTANCE_1" geometryType="VIA">
+      <foundation:Name>VIA1</foundation:Name>
+      <foundation:Description>过孔实例1 - 位置(20,20)</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>VIA_INST_1</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <pdm:ItemInstance>
+        <pdm:Item>VIA_PADSTACK</pdm:Item>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>VIA_1</foundation:ObjectName>
+        </pdm:InstanceName>
+        <!-- 2D变换定义位置 -->
+        <pdm:Transformation>
+          <pdm:TransformationType>d2</pdm:TransformationType>
+          <pdm:xx>1.0</pdm:xx>
+          <pdm:xy>0.0</pdm:xy>
+          <pdm:yx>0.0</pdm:yx>
+          <pdm:yy>1.0</pdm:yy>
+          <pdm:tx>
+            <property:Value>20.0</property:Value> <!-- X位置 -->
+          </pdm:tx>
+          <pdm:ty>
+            <property:Value>20.0</property:Value> <!-- Y位置 -->
+          </pdm:ty>
+        </pdm:Transformation>
+      </pdm:ItemInstance>
+      <!-- 关联到层叠组合 -->
+      <pdm:AssembleToName>BOARD_STACKUP</pdm:AssembleToName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+    
+    <!-- 4.6 过孔实例2 -->
+    <foundation:Item id="VIA_INSTANCE_2" geometryType="VIA">
+      <foundation:Name>VIA2</foundation:Name>
+      <foundation:Description>过孔实例2 - 位置(80,60)</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>VIA_INST_2</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <pdm:ItemInstance>
+        <pdm:Item>VIA_PADSTACK</pdm:Item>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>VIA_2</foundation:ObjectName>
+        </pdm:InstanceName>
+        <!-- 2D变换定义位置 -->
+        <pdm:Transformation>
+          <pdm:TransformationType>d2</pdm:TransformationType>
+          <pdm:xx>1.0</pdm:xx>
+          <pdm:xy>0.0</pdm:xy>
+          <pdm:yx>0.0</pdm:yx>
+          <pdm:yy>1.0</pdm:yy>
+          <pdm:tx>
+            <property:Value>80.0</property:Value> <!-- X位置 -->
+          </pdm:tx>
+          <pdm:ty>
+            <property:Value>60.0</property:Value> <!-- Y位置 -->
+          </pdm:ty>
+        </pdm:Transformation>
+      </pdm:ItemInstance>
+      <!-- 关联到层叠组合 -->
+      <pdm:AssembleToName>BOARD_STACKUP</pdm:AssembleToName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- ============== 第5部分: 定义电气元件 ============== -->
+    <!-- 5.1 电阻封装几何定义 -->
+    <foundation:CartesianPoint id="RES_PT1" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>-1.6</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>-0.8</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CartesianPoint id="RES_PT2" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>1.6</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>-0.8</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CartesianPoint id="RES_PT3" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>1.6</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>0.8</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CartesianPoint id="RES_PT4" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>-1.6</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>0.8</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:PolyLine id="RES_POLYLINE">
+      <d2:Point>RES_PT1</d2:Point>
+      <d2:Point>RES_PT2</d2:Point>
+      <d2:Point>RES_PT3</d2:Point>
+      <d2:Point>RES_PT4</d2:Point>
+      <d2:Point>RES_PT1</d2:Point> <!-- 闭合多边形 -->
+    </foundation:PolyLine>
+    
+    <!-- 5.2 电阻曲线集定义 -->
+    <foundation:CurveSet2d id="RES_CURVESET" xsi:type="d2:EDMDCurveSet2d">
+      <pdm:ShapeDescriptionType>GeometricModel</pdm:ShapeDescriptionType>
+      <d2:LowerBound>
+        <property:Value>0.0</property:Value>
+      </d2:LowerBound>
+      <d2:UpperBound>
+        <property:Value>0.5</property:Value> <!-- 电阻高度0.5mm -->
+      </d2:UpperBound>
+      <d2:DetailedGeometricModelElement>RES_POLYLINE</d2:DetailedGeometricModelElement>
+    </foundation:CurveSet2d>
+    
+    <!-- 5.3 电阻形状元素定义 -->
+    <foundation:ShapeElement id="RES_SHAPE_ELEMENT">
+      <pdm:ShapeElementType>FeatureShapeElement</pdm:ShapeElementType>
+      <pdm:Inverted>false</pdm:Inverted>
+      <pdm:DefiningShape>RES_CURVESET</pdm:DefiningShape>
+    </foundation:ShapeElement>
+    
+    <!-- 5.4 电阻引脚定义 -->
+    <foundation:CartesianPoint id="RES_PIN1_POINT" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>-1.2</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>0.0</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CartesianPoint id="RES_PIN2_POINT" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>1.2</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>0.0</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <!-- 5.5 电阻Item定义 -->
+    <foundation:Item id="RES_PACKAGE" geometryType="COMPONENT">
+      <foundation:Name>RES_0603</foundation:Name>
+      <foundation:Description>0603封装电阻</foundation:Description>
+      <pdm:ItemType>single</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>RES_0603_PKG</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <pdm:PackageName>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:ObjectName>0603</foundation:ObjectName>
+      </pdm:PackageName>
+      <!-- 元件引脚定义 -->
+      <pdm:PackagePin pinNumber="1" primary="true">
+        <d2:Point>RES_PIN1_POINT</d2:Point>
+      </pdm:PackagePin>
+      <pdm:PackagePin pinNumber="2" primary="false">
+        <d2:Point>RES_PIN2_POINT</d2:Point>
+      </pdm:PackagePin>
+      <!-- 元件属性 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>PARTNUM</foundation:ObjectName>
+        </property:Key>
+        <property:Value>RC0603FR-0710KL</property:Value>
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>RESISTANCE</foundation:ObjectName>
+        </property:Key>
+        <property:Value>10000</property:Value> <!-- 10KΩ -->
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>TOLERANCE</foundation:ObjectName>
+        </property:Key>
+        <property:Value>1</property:Value> <!-- 1% -->
+      </foundation:UserProperty>
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>POWER_MAX</foundation:ObjectName>
+        </property:Key>
+        <property:Value>0.1</property:Value> <!-- 0.1W -->
+      </foundation:UserProperty>
+      <pdm:Shape>RES_SHAPE_ELEMENT</pdm:Shape>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+    
+    <!-- 5.6 电阻R1实例 (顶层) -->
+    <foundation:Item id="RES_R1_INSTANCE" geometryType="COMPONENT">
+      <foundation:Name>R1</foundation:Name>
+      <foundation:Description>电阻R1 - 顶层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>COMP_R1</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <pdm:ItemInstance>
+        <pdm:Item>RES_PACKAGE</pdm:Item>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>R1</foundation:ObjectName>
+        </pdm:InstanceName>
+        <!-- 元件属性 -->
+        <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+          <property:Key>
+            <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+            <foundation:ObjectName>REFDES</foundation:ObjectName>
+          </property:Key>
+          <property:Value>R1</property:Value>
+        </foundation:UserProperty>
+        <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+          <property:Key>
+            <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+            <foundation:ObjectName>PLACED</foundation:ObjectName>
+          </property:Key>
+          <property:Value>true</property:Value>
+        </foundation:UserProperty>
+        <!-- 2D变换定义位置和旋转 -->
+        <pdm:Transformation>
+          <pdm:TransformationType>d2</pdm:TransformationType>
+          <pdm:xx>1.0</pdm:xx> <!-- cos(0°) -->
+          <pdm:xy>0.0</pdm:xy> <!-- -sin(0°) -->
+          <pdm:yx>0.0</pdm:yx> <!-- sin(0°) -->
+          <pdm:yy>1.0</pdm:yy> <!-- cos(0°) -->
+          <pdm:tx>
+            <property:Value>30.0</property:Value> <!-- X位置 -->
+          </pdm:tx>
+          <pdm:ty>
+            <property:Value>30.0</property:Value> <!-- Y位置 -->
+          </pdm:ty>
+        </pdm:Transformation>
+      </pdm:ItemInstance>
+      <!-- 关联到顶层 -->
+      <pdm:AssembleToName>TOP</pdm:AssembleToName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+    
+    <!-- 5.7 电阻R2实例 (底层) -->
+    <foundation:Item id="RES_R2_INSTANCE" geometryType="COMPONENT">
+      <foundation:Name>R2</foundation:Name>
+      <foundation:Description>电阻R2 - 底层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>COMP_R2</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <pdm:ItemInstance>
+        <pdm:Item>RES_PACKAGE</pdm:Item>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>R2</foundation:ObjectName>
+        </pdm:InstanceName>
+        <!-- 元件属性 -->
+        <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+          <property:Key>
+            <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+            <foundation:ObjectName>REFDES</foundation:ObjectName>
+          </property:Key>
+          <property:Value>R2</property:Value>
+        </foundation:UserProperty>
+        <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+          <property:Key>
+            <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+            <foundation:ObjectName>PLACED</foundation:ObjectName>
+          </property:Key>
+          <property:Value>true</property:Value>
+        </foundation:UserProperty>
+        <!-- 2D变换定义位置和旋转(90°) -->
+        <pdm:Transformation>
+          <pdm:TransformationType>d2</pdm:TransformationType>
+          <pdm:xx>0.0</pdm:xx>  <!-- cos(90°) = 0 -->
+          <pdm:xy>-1.0</pdm:xy> <!-- -sin(90°) = -1 -->
+          <pdm:yx>1.0</pdm:yx>  <!-- sin(90°) = 1 -->
+          <pdm:yy>0.0</pdm:yy>  <!-- cos(90°) = 0 -->
+          <pdm:tx>
+            <property:Value>30.0</property:Value> <!-- X位置 -->
+          </pdm:tx>
+          <pdm:ty>
+            <property:Value>50.0</property:Value> <!-- Y位置 -->
+          </pdm:ty>
+        </pdm:Transformation>
+      </pdm:ItemInstance>
+      <!-- 关联到底层，注意底层元件需要翻转 -->
+      <pdm:AssembleToName>BOTTOM</pdm:AssembleToName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- ============== 第6部分: 定义机械元件 ============== -->
+    <!-- 6.1 螺丝几何定义 -->
+    <foundation:CircleCenter id="SCREW_CIRCLE">
+      <d2:CenterPoint>
+        <d2:X>
+          <property:Value>0</property:Value>
+        </d2:X>
+        <d2:Y>
+          <property:Value>0</property:Value>
+        </d2:Y>
+      </d2:CenterPoint>
+      <d2:Diameter>
+        <property:Value>3.0</property:Value> <!-- 螺丝直径3mm -->
+      </d2:Diameter>
+    </foundation:CircleCenter>
+    
+    <!-- 6.2 螺丝曲线集定义 -->
+    <foundation:CurveSet2d id="SCREW_CURVESET" xsi:type="d2:EDMDCurveSet2d">
+      <pdm:ShapeDescriptionType>GeometricModel</pdm:ShapeDescriptionType>
+      <d2:LowerBound>
+        <property:Value>0.0</property:Value>
+      </d2:LowerBound>
+      <d2:UpperBound>
+        <property:Value>5.0</property:Value> <!-- 螺丝高度5mm -->
+      </d2:UpperBound>
+      <d2:DetailedGeometricModelElement>SCREW_CIRCLE</d2:DetailedGeometricModelElement>
+    </foundation:CurveSet2d>
+    
+    <!-- 6.3 螺丝形状元素定义 -->
+    <foundation:ShapeElement id="SCREW_SHAPE_ELEMENT">
+      <pdm:ShapeElementType>FeatureShapeElement</pdm:ShapeElementType>
+      <pdm:Inverted>false</pdm:Inverted>
+      <pdm:DefiningShape>SCREW_CURVESET</pdm:DefiningShape>
+    </foundation:ShapeElement>
+    
+    <!-- 6.4 螺丝Item定义 -->
+    <foundation:Item id="SCREW_PACKAGE" geometryType="COMPONENT_MECHANICAL">
+      <foundation:Name>SCREW_M3</foundation:Name>
+      <foundation:Description>M3机械螺丝</foundation:Description>
+      <pdm:ItemType>single</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>MCADSYSTEM</foundation:SystemScope>
+        <foundation:Number>SCREW_M3_PKG</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <pdm:PackageName>
+        <foundation:SystemScope>MCADSYSTEM</foundation:SystemScope>
+        <foundation:ObjectName>M3x5</foundation:ObjectName>
+      </pdm:PackageName>
+      <!-- 3D模型引用 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>3D_MODEL</foundation:ObjectName>
+        </property:Key>
+        <property:Value>screw_m3x5.step</property:Value>
+      </foundation:UserProperty>
+      <pdm:Shape>SCREW_SHAPE_ELEMENT</pdm:Shape>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+    
+    <!-- 6.5 螺丝TP1实例 -->
+    <foundation:Item id="SCREW_TP1_INSTANCE" geometryType="COMPONENT_MECHANICAL">
+      <foundation:Name>TP1</foundation:Name>
+      <foundation:Description>机械螺丝TP1 - 顶层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>MCADSYSTEM</foundation:SystemScope>
+        <foundation:Number>COMP_TP1</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <pdm:ItemInstance>
+        <pdm:Item>SCREW_PACKAGE</pdm:Item>
+        <pdm:InstanceName>
+          <foundation:SystemScope>MCADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>TP1</foundation:ObjectName>
+        </pdm:InstanceName>
+        <!-- 元件属性 -->
+        <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+          <property:Key>
+            <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+            <foundation:ObjectName>REFDES</foundation:ObjectName>
+          </property:Key>
+          <property:Value>TP1</property:Value>
+        </foundation:UserProperty>
+        <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+          <property:Key>
+            <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+            <foundation:ObjectName>PARTNUM</foundation:ObjectName>
+          </property:Key>
+          <property:Value>SCREW_M3x5</property:Value>
+        </foundation:UserProperty>
+        <!-- 2D变换定义位置 -->
+        <pdm:Transformation>
+          <pdm:TransformationType>d2</pdm:TransformationType>
+          <pdm:xx>1.0</pdm:xx>
+          <pdm:xy>0.0</pdm:xy>
+          <pdm:yx>0.0</pdm:yx>
+          <pdm:yy>1.0</pdm:yy>
+          <pdm:tx>
+            <property:Value>70.0</property:Value> <!-- X位置 -->
+          </pdm:tx>
+          <pdm:ty>
+            <property:Value>30.0</property:Value> <!-- Y位置 -->
+          </pdm:ty>
+        </pdm:Transformation>
+      </pdm:ItemInstance>
+      <!-- 关联到顶层 -->
+      <pdm:AssembleToName>TOP</pdm:AssembleToName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+    <!-- ============== 第7部分: 定义禁止区域 ============== -->
+    <!-- 7.1 顶层禁止元件区域 (矩形) -->
+    <!-- 7.1.1 几何定义 -->
+    <foundation:CartesianPoint id="KO1_PT1" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>10</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>10</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CartesianPoint id="KO1_PT2" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>40</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>10</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CartesianPoint id="KO1_PT3" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>40</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>40</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CartesianPoint id="KO1_PT4" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>10</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>40</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:PolyLine id="KO1_POLYLINE">
+      <d2:Point>KO1_PT1</d2:Point>
+      <d2:Point>KO1_PT2</d2:Point>
+      <d2:Point>KO1_PT3</d2:Point>
+      <d2:Point>KO1_PT4</d2:Point>
+      <d2:Point>KO1_PT1</d2:Point> <!-- 闭合多边形 -->
+    </foundation:PolyLine>
+    
+    <!-- 7.1.2 曲线集定义 -->
+    <foundation:CurveSet2d id="KO1_CURVESET" xsi:type="d2:EDMDCurveSet2d">
+      <pdm:ShapeDescriptionType>GeometricModel</pdm:ShapeDescriptionType>
+      <d2:LowerBound>
+        <property:Value>1.5862</property:Value> <!-- 从顶层表面开始 -->
+      </d2:LowerBound>
+      <d2:UpperBound>
+        <property:Value>10.0</property:Value> <!-- 向上延伸10mm -->
+      </d2:UpperBound>
+      <d2:DetailedGeometricModelElement>KO1_POLYLINE</d2:DetailedGeometricModelElement>
+    </foundation:CurveSet2d>
+    
+    <!-- 7.1.3 形状元素定义 -->
+    <foundation:ShapeElement id="KO1_SHAPE_ELEMENT">
+      <pdm:ShapeElementType>FeatureShapeElement</pdm:ShapeElementType>
+      <pdm:Inverted>false</pdm:Inverted>
+      <pdm:DefiningShape>KO1_CURVESET</pdm:DefiningShape>
+    </foundation:ShapeElement>
+    
+    <!-- 7.1.4 禁止区域Item定义 -->
+    <foundation:Item id="KEEPOUT_TOP_COMP" geometryType="KEEPOUT_AREA_COMPONENT">
+      <foundation:Name>KO_TOP_COMPONENT</foundation:Name>
+      <foundation:Description>顶层禁止元件区域</foundation:Description>
+      <pdm:ItemType>single</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>KO_TOP_COMP</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <pdm:Shape>KO1_SHAPE_ELEMENT</pdm:Shape>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+    
+    <!-- 7.1.5 禁止区域实例 -->
+    <foundation:Item id="KEEPOUT_TOP_INSTANCE" geometryType="KEEPOUT_AREA_COMPONENT">
+      <foundation:Name>KO1</foundation:Name>
+      <foundation:Description>禁止元件区域实例 - 顶层</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>KO_INST_1</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <pdm:ItemInstance>
+        <pdm:Item>KEEPOUT_TOP_COMP</pdm:Item>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>KO_TOP_AREA</foundation:ObjectName>
+        </pdm:InstanceName>
+      </pdm:ItemInstance>
+      <!-- 关联到顶层 -->
+      <pdm:AssembleToName>TOP</pdm:AssembleToName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+    
+    <!-- 7.2 内层1禁止铺铜区域 (多边形) -->
+    <!-- 7.2.1 几何定义 -->
+    <foundation:CartesianPoint id="KO2_PT1" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>50</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>10</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CartesianPoint id="KO2_PT2" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>60</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>10</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:CartesianPoint id="KO2_PT3" xsi:type="d2:EDMDCartesianPoint">
+      <d2:X>
+        <property:Value>55</property:Value>
+      </d2:X>
+      <d2:Y>
+        <property:Value>30</property:Value>
+      </d2:Y>
+    </foundation:CartesianPoint>
+    
+    <foundation:PolyLine id="KO2_POLYLINE">
+      <d2:Point>KO2_PT1</d2:Point>
+      <d2:Point>KO2_PT2</d2:Point>
+      <d2:Point>KO2_PT3</d2:Point>
+      <d2:Point>KO2_PT1</d2:Point> <!-- 闭合多边形 -->
+    </foundation:PolyLine>
+    
+    <!-- 7.2.2 曲线集定义 -->
+    <foundation:CurveSet2d id="KO2_CURVESET" xsi:type="d2:EDMDCurveSet2d">
+      <pdm:ShapeDescriptionType>GeometricModel</pdm:ShapeDescriptionType>
+      <d2:LowerBound>
+        <property:Value>1.3256</property:Value> <!-- 内层1下边界 -->
+      </d2:LowerBound>
+      <d2:UpperBound>
+        <property:Value>1.3408</property:Value> <!-- 内层1上边界 -->
+      </d2:UpperBound>
+      <d2:DetailedGeometricModelElement>KO2_POLYLINE</d2:DetailedGeometricModelElement>
+    </foundation:CurveSet2d>
+    
+    <!-- 7.2.3 形状元素定义 -->
+    <foundation:ShapeElement id="KO2_SHAPE_ELEMENT">
+      <pdm:ShapeElementType>FeatureShapeElement</pdm:ShapeElementType>
+      <pdm:Inverted>false</pdm:Inverted>
+      <pdm:DefiningShape>KO2_CURVESET</pdm:DefiningShape>
+    </foundation:ShapeElement>
+    
+    <!-- 7.2.4 禁止区域Item定义 (使用KEEPOUT_AREA_OTHER表示禁止铺铜) -->
+    <foundation:Item id="KEEPOUT_INNER_COPPER" geometryType="KEEPOUT_AREA_OTHER">
+      <foundation:Name>KO_INNER_COPPER</foundation:Name>
+      <foundation:Description>内层1禁止铺铜区域</foundation:Description>
+      <pdm:ItemType>single</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>KO_INNER_COPPER</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <!-- 使用UserProperty指定具体禁止类型 -->
+      <foundation:UserProperty xsi:type="property:EDMDUserSimpleProperty">
+        <property:Key>
+          <foundation:SystemScope>SYSTEM_1</foundation:SystemScope>
+          <foundation:ObjectName>KEEPOUT_TYPE</foundation:ObjectName>
+        </property:Key>
+        <property:Value>COPPER_POUR</property:Value>
+      </foundation:UserProperty>
+      <pdm:Shape>KO2_SHAPE_ELEMENT</pdm:Shape>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+    
+    <!-- 7.2.5 禁止区域实例 -->
+    <foundation:Item id="KEEPOUT_INNER_INSTANCE" geometryType="KEEPOUT_AREA_OTHER">
+      <foundation:Name>KO2</foundation:Name>
+      <foundation:Description>禁止铺铜区域实例 - 内层1</foundation:Description>
+      <pdm:ItemType>assembly</pdm:ItemType>
+      <pdm:Identifier>
+        <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+        <foundation:Number>KO_INST_2</foundation:Number>
+        <foundation:Version>1</foundation:Version>
+        <foundation:Revision>0</foundation:Revision>
+        <foundation:Sequence>0</foundation:Sequence>
+      </pdm:Identifier>
+      <pdm:ItemInstance>
+        <pdm:Item>KEEPOUT_INNER_COPPER</pdm:Item>
+        <pdm:InstanceName>
+          <foundation:SystemScope>ECADSYSTEM</foundation:SystemScope>
+          <foundation:ObjectName>KO_INNER_AREA</foundation:ObjectName>
+        </pdm:InstanceName>
+      </pdm:ItemInstance>
+      <!-- 关联到内层1 -->
+      <pdm:AssembleToName>INNER_1</pdm:AssembleToName>
+      <pdm:Baseline>
+        <property:Value>true</property:Value>
+      </pdm:Baseline>
+    </foundation:Item>
+
+  </foundation:Body>
+
+  <!-- ==================== 处理指令 ==================== -->
+  <foundation:ProcessInstruction xsi:type="computational:EDMDProcessInstructionSendInformation">
+    <computational:Actor>ECAD_SYSTEM</computational:Actor>
+    <computational:Description>4层板设计基线数据</computational:Description>
+  </foundation:ProcessInstruction>
+
+</foundation:EDMDDataSet>
