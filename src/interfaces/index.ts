@@ -8,15 +8,17 @@
 
 // ============= 核心构建器接口 =============
 export * from './IIDXBuilder';
-export * from './IGeometryFactory';
 export * from './IItemFactory';
-export * from './IIDXExporter';
+
+// TODO: 以下接口将在后续任务中实现
+// export * from './IGeometryFactory';
+// export * from './IIDXExporter';
 
 // ============= 验证器接口 =============
-export * from './IValidator';
+// export * from './IValidator';
 
 // ============= 插件接口 =============
-export * from './IGeometryTypePlugin';
+// export * from './IGeometryTypePlugin';
 
 // ============= 配置接口 =============
-export * from './IIDXPorterConfig';
+// export * from './IIDXPorterConfig';

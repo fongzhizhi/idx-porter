@@ -28,7 +28,6 @@
 
 // ============= 主要导出接口 =============
 export * from './interfaces';
-export * from './types';
 
 // ============= 核心类导出 =============
 export * from './core/IDXBuilder';
@@ -38,11 +37,15 @@ export * from './core/ItemFactory';
 // ============= 数据模型导出 =============
 export * from './models';
 
+// ============= 枚举类型导出 =============
+export * from './types/enums';
+
 // ============= 工具函数导出 =============
 export * from './utils';
 
+// TODO: 错误类型将在任务19中实现
 // ============= 错误类型导出 =============
-export * from './errors';
+// export * from './errors';
 
 // ============= 版本信息 =============
 export const VERSION = '1.0.0';

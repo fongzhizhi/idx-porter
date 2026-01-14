@@ -4,6 +4,8 @@
 
 IDXPorter是一个基于TypeScript开发的IDX V4.5导出器工具库，采用模块化架构设计，为EDA软件提供完整的IDX文件生成能力。系统通过清晰的接口抽象和类型定义，支持PCB设计数据到IDX格式的转换，包括几何形状、层叠结构、组件信息等核心要素。
 
+**几何计算引擎**：系统使用 [@flatten-js/core](https://github.com/alexbol99/flatten-js) (MIT协议) 作为底层2D几何计算库，提供高性能的几何运算能力，包括点、线、圆、弧等基础几何元素的创建、距离计算、相交检测、边界框计算等功能。通过适配器模式封装，既保留了IDX特定的业务逻辑（ID管理、验证、序列化），又获得了成熟几何库的强大计算能力。
+
 ## 架构设计
 
 ### 整体架构
@@ -66,15 +68,55 @@ graph TB
 - **IDXExporter**: 导出器接口
 
 #### 2. 核心模块
-- **几何引擎**: 处理2D/2.5D几何形状的创建和管理
+- **几何引擎**: 处理2D/2.5D几何形状的创建和管理，基于 @flatten-js/core
 - **Item管理器**: 管理IDX中的各种Item类型
 - **IDX构建器**: 协调整个IDX文档的构建过程
 - **导出引擎**: 负责XML生成和文件输出
 
 #### 3. 数据模型
 - **类型定义**: 完整的TypeScript类型系统
-- **数据模型**: IDX元素的内部表示
+- **数据模型**: IDX元素的内部表示，采用适配器模式封装几何库
 - **验证器**: 数据完整性和正确性验证
+
+### 几何库选型
+
+#### 技术选型：@flatten-js/core
+
+经过评估，系统选择 [@flatten-js/core](https://github.com/alexbol99/flatten-js) 作为底层2D几何计算库：
+
+**选型理由**：
+- **MIT协议**：商业友好，无使用限制
+- **轻量级**：1.2MB，专注于2D几何计算
+- **功能完整**：支持点、线、圆、弧、多边形等基础几何元素
+- **高性能**：提供距离计算、相交检测、边界框计算等高效算法
+- **TypeScript支持**：原生TypeScript类型定义
+- **成熟稳定**：1.1k+ GitHub stars，经过大量项目验证
+- **零依赖**：仅依赖 @flatten-js/interval-tree
+
+**架构模式**：适配器模式
+
+```
+用户代码
+    ↓
+src/models/geometry/  (适配器层 - IDX特定封装)
+    ├─ ID管理
+    ├─ 业务验证
+    ├─ JSON序列化
+    └─ IDX特定方法
+    ↓
+@flatten-js/core     (底层库 - 几何计算)
+    ├─ Point, Circle, Arc, Polygon
+    ├─ 距离计算
+    ├─ 相交检测
+    └─ 边界框计算
+```
+
+**设计优势**：
+1. **职责分离**：IDX业务逻辑与几何计算分离
+2. **类型安全**：保持IDX特定的类型定义
+3. **易于扩展**：可以利用 flatten-js 的高级功能（布尔运算、相交检测等）
+4. **易于维护**：几何计算由成熟库处理，减少维护成本
+5. **性能优秀**：利用优化的几何算法，提升计算效率
 
 ## 组件和接口设计
 
@@ -251,37 +293,54 @@ enum UnitLength {
 
 #### 2. 几何数据模型
 
+**设计说明**：几何模型采用适配器模式，封装 @flatten-js/core 库提供的2D几何计算能力，同时保留IDX特定的业务逻辑（ID管理、验证、序列化）。
+
 ```typescript
 /**
  * 笛卡尔坐标点
+ * 
+ * @description
+ * 封装 Flatten.Point，提供IDX特定的ID管理和序列化功能
  */
 interface CartesianPoint {
   readonly id: string;
   readonly x: number;
   readonly y: number;
+  readonly flattenPoint: Flatten.Point;  // 底层几何对象，用于高性能计算
 }
 
 /**
  * 多段线
+ * 
+ * @description
+ * 封装 Flatten.Polygon 或 Flatten.Segment[]，支持开放和闭合多段线
  */
 interface PolyLine {
   readonly id: string;
   readonly points: CartesianPoint[];
-  readonly thickness?: number;
+  readonly thickness?: number | undefined;
   readonly closed: boolean;
+  readonly flattenShape: Flatten.Polygon | Flatten.Segment[];  // 底层几何对象
 }
 
 /**
  * 圆形（中心点定义）
+ * 
+ * @description
+ * 封装 Flatten.Circle，提供中心点+直径的定义方式
  */
 interface CircleCenter {
   readonly id: string;
   readonly centerPoint: CartesianPoint;
   readonly diameter: number;
+  readonly flattenCircle: Flatten.Circle;  // 底层几何对象
 }
 
 /**
  * 圆弧
+ * 
+ * @description
+ * 封装 Flatten.Arc，支持起点、终点、半径和方向定义
  */
 interface Arc {
   readonly id: string;
@@ -289,6 +348,7 @@ interface Arc {
   readonly endPoint: CartesianPoint;
   readonly radius: number;
   readonly isCCW: boolean;
+  readonly flattenArc: Flatten.Arc;  // 底层几何对象
 }
 
 /**

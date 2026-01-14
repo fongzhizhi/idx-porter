@@ -37,9 +37,9 @@ declare global {
 // ============= 自定义匹配器实现 =============
 expect.extend({
   toBeValidGeometry(received: unknown) {
-    // TEST_CASE: Geometry element validation
-    // TEST_INPUT: received - any object
-    // TEST_EXPECT: Returns pass=true for valid geometry elements
+    // TEST_CASE: 几何元素验证
+    // TEST_INPUT: received - 任意对象
+    // TEST_EXPECT: 对有效的几何元素返回pass=true
     const pass = typeof received === 'object' && received !== null;
     return {
       message: () => `expected ${received} to be a valid geometry element`,
@@ -48,9 +48,9 @@ expect.extend({
   },
   
   toBeValidItem(received: unknown) {
-    // TEST_CASE: IDX Item validation
-    // TEST_INPUT: received - any object
-    // TEST_EXPECT: Returns pass=true for valid IDX items
+    // TEST_CASE: IDX Item验证
+    // TEST_INPUT: received - 任意对象
+    // TEST_EXPECT: 对有效的IDX项返回pass=true
     const pass = typeof received === 'object' && received !== null;
     return {
       message: () => `expected ${received} to be a valid IDX item`,
@@ -59,9 +59,9 @@ expect.extend({
   },
   
   toBeValidIDXXML(received: string) {
-    // TEST_CASE: IDX XML format validation
-    // TEST_INPUT: received - XML string
-    // TEST_EXPECT: Returns pass=true for valid IDX XML
+    // TEST_CASE: IDX XML格式验证
+    // TEST_INPUT: received - XML字符串
+    // TEST_EXPECT: 对有效的IDX XML返回pass=true
     const pass = typeof received === 'string' && received.includes('EDMDDataSet');
     return {
       message: () => `expected ${received} to be valid IDX XML`,
@@ -72,12 +72,12 @@ expect.extend({
 
 // ============= 测试前清理 =============
 beforeEach(() => {
-  // TEST_REQUIRE: Clean global state before each test
+  // TEST_REQUIRE: 每个测试前清理全局状态
   jest.clearAllMocks();
 });
 
 // ============= 测试后清理 =============
 afterEach(() => {
-  // TEST_REQUIRE: Restore mocks after each test
+  // TEST_REQUIRE: 每个测试后恢复模拟对象
   jest.restoreAllMocks();
 });

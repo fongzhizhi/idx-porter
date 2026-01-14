@@ -36,14 +36,15 @@ IDXPorter是一个基于TypeScript开发的IDX导出器工具库，专门用于�
 
 #### 验收标准
 
-1. 当定义点坐标时，系统应该支持CartesianPoint的创建，包含X、Y坐标值和精确的数值类型
-2. 当定义线段时，系统应该支持PolyLine的创建，包含点序列、可选的线宽属性和闭合控制
-3. 当定义圆形时，系统应该支持CircleCenter（中心点+直径）和Circle3Point（三点定义）两种方式
-4. 当定义圆弧时，系统应该支持Arc的创建，包含起点、终点、半径和方向信息（顺时针/逆时针）
+1. 当定义点坐标时，系统应该支持CartesianPoint的创建，包含X、Y坐标值和精确的数值类型，底层使用 @flatten-js/core 提供高性能计算
+2. 当定义线段时，系统应该支持PolyLine的创建，包含点序列、可选的线宽属性和闭合控制，底层使用 Flatten.Polygon 和 Flatten.Segment
+3. 当定义圆形时，系统应该支持CircleCenter（中心点+直径）和Circle3Point（三点定义）两种方式，底层使用 Flatten.Circle
+4. 当定义圆弧时，系统应该支持Arc的创建，包含起点、终点、半径和方向信息（顺时针/逆时针），底层使用 Flatten.Arc
 5. 当定义复杂形状时，系统应该支持CompositeCurve、BSplineCurve和Ellipse等高级几何元素
 6. 当构建2.5D几何时，系统应该支持CurveSet2d的创建，包含LowerBound/UpperBound的Z轴范围定义
 7. 当处理几何布尔运算时，系统应该支持ShapeElement的Inverted属性，实现材料添加和切除操作
 8. 当定义几何精度时，系统应该支持毫米单位和0.001mm的建议精度
+9. 当进行几何计算时，系统应该利用 @flatten-js/core (MIT协议) 提供的高性能2D几何算法，包括距离计算、相交检测、边界框计算等
 
 
 ### 需求 4

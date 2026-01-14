@@ -8,11 +8,11 @@
 
 describe('Project Structure', () => {
   test('should have correct package.json configuration', () => {
-    // TEST_CASE: Package.json configuration validation
-    // TEST_INPUT: package.json file content
-    // TEST_EXPECT: Correct name, version, main, and types fields
+    // TEST_CASE: Package.json配置验证
+    // TEST_INPUT: package.json文件内容
+    // TEST_EXPECT: 正确的name、version、main和types字段
     const packageJson = require('../package.json');
-    
+
     expect(packageJson.name).toBe('idx-porter');
     expect(packageJson.version).toBe('1.0.0');
     expect(packageJson.main).toBe('dist/index.js');
@@ -20,44 +20,44 @@ describe('Project Structure', () => {
   });
 
   test('should be able to import main module', () => {
-    // TEST_CASE: Main module import verification
-    // TEST_INPUT: src/index.ts module
-    // TEST_EXPECT: No import errors thrown
+    // TEST_CASE: 主模块导入验证
+    // TEST_INPUT: src/index.ts模块
+    // TEST_EXPECT: 不抛出导入错误
     expect(() => {
       require('../src/index');
     }).not.toThrow();
   });
 
   test('should have TypeScript configuration', () => {
-    // TEST_CASE: TypeScript configuration file existence
-    // TEST_INPUT: tsconfig.json file
-    // TEST_EXPECT: File exists and is readable
+    // TEST_CASE: TypeScript配置文件存在性检查
+    // TEST_INPUT: tsconfig.json文件
+    // TEST_EXPECT: 文件存在且可读
     const fs = require('fs');
     expect(fs.existsSync('tsconfig.json')).toBe(true);
   });
 
   test('should have ESLint configuration', () => {
-    // TEST_CASE: ESLint configuration file existence
-    // TEST_INPUT: .eslintrc.js file
-    // TEST_EXPECT: File exists and is readable
+    // TEST_CASE: ESLint配置文件存在性检查
+    // TEST_INPUT: .eslintrc.js文件
+    // TEST_EXPECT: 文件存在且可读
     const fs = require('fs');
     expect(fs.existsSync('.eslintrc.js')).toBe(true);
   });
 
   test('should have Jest configuration', () => {
-    // TEST_CASE: Jest configuration file existence
-    // TEST_INPUT: jest.config.js file
-    // TEST_EXPECT: File exists and is readable
+    // TEST_CASE: Jest配置文件存在性检查
+    // TEST_INPUT: jest.config.js文件
+    // TEST_EXPECT: 文件存在且可读
     const fs = require('fs');
     expect(fs.existsSync('jest.config.js')).toBe(true);
   });
 
   test('should have proper directory structure', () => {
-    // TEST_CASE: Directory structure validation
-    // TEST_INPUT: Project directory structure
-    // TEST_EXPECT: All required directories exist
+    // TEST_CASE: 目录结构验证
+    // TEST_INPUT: 项目目录结构
+    // TEST_EXPECT: 所有必需的目录都存在
     const fs = require('fs');
-    
+
     expect(fs.existsSync('src')).toBe(true);
     expect(fs.existsSync('src/interfaces')).toBe(true);
     expect(fs.existsSync('src/types')).toBe(true);

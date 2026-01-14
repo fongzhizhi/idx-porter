@@ -115,7 +115,7 @@ export function createTestUserProperty(name: string, value: string): any {
  * @testExpected Returns true
  */
 export function validateBasicXMLFormat(xml: string): boolean {
-  // TEST_CASE: Basic XML format validation
+  // TEST_CASE: 基本XML格式验证
   return xml.includes('<?xml') && xml.includes('EDMDDataSet');
 }
 
